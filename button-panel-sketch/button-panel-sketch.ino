@@ -88,7 +88,7 @@ int convertAnalogToKeypadButton(int value) {
 }
 
 inline int convertAnalogToSlieder(int value) {
-  return map(value, 0, 1023, 0, 100);
+  return map(value, 0, 1022, 0, 100);
 }
 
 inline void printSensorValue(const char* label, int value) {   
