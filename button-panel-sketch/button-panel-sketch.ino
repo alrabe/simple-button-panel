@@ -28,7 +28,7 @@ void loop() {
   ReportSlider1();
   UpdateJoystick();
 
-  ReportTime(startTime, micros());
+  //ReportTime(startTime, micros());
   delay(DELAY_TIME);
 }
 
