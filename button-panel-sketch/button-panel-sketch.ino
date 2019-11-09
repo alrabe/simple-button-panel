@@ -4,6 +4,7 @@
 #define DEBUG_SERIAL
 //#define DEBUG_TIME
 //#define DEBUG_SKIP_USB
+#define DEBUG_SKIP_BEFORE_ROTARYMODE1 // do not send joystick events until rotary1 is klicked once
 
 // connection pins
 #define SLIDER1 A0
@@ -131,11 +132,14 @@ void ReportUsb() {
   }
 
 #ifndef DEBUG_SKIP_USB  
-  digitalWrite(LED_BUILTIN, HIGH);
-  // do not send joystick events before clicking a rotary button at least once
-  if(currentRotary1Mode >= 0) {
+  digitalWrite(LED_BUILTIN, HIGH);  
+#ifdef DEBUG_SKIP_BEFORE_ROTARYMODE1
+    if(currentRotary1Mode >= 0) {
+      Joystick.sendState();    
+    }
+#else
     Joystick.sendState();
-  }
+#endif
   digitalWrite(LED_BUILTIN, LOW);  
 #endif
 }
