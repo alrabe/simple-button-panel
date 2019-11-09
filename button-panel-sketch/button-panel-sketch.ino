@@ -1,7 +1,7 @@
 #include <Joystick.h>
 
 // DEBUG
-#define DEBUG_SERIAL
+//#define DEBUG_SERIAL
 //#define DEBUG_TIME
 //#define DEBUG_SKIP_USB
 #define DEBUG_SKIP_BEFORE_ROTARYMODE1 // do not send joystick events until rotary1 is klicked once
@@ -19,7 +19,7 @@ const int keyPadButtonIds[] = {8, 4, 0, 9, 5, 1, 10, 6, 2, 11, 7, 3};  // keypad
 const int rotaryModeCount = (sizeof(rotarty1Buttons)/sizeof(*rotarty1Buttons)) >> 1;
 
 #define DEBOUNCE_DELAY_MS 5
-#define DELAY_TIME_MS 200     // use less then 50 ms for non testing environment
+#define DELAY_TIME_MS 40     // use less then 50 ms for non testing environment
 
 // start of internals - only change if you understand the consequences!
 #define NO_BUTTON -1
@@ -31,6 +31,7 @@ const int rotaryModeCount = (sizeof(rotarty1Buttons)/sizeof(*rotarty1Buttons)) >
 
 #define SLIDER_MIN 0
 #define SLIDER_MAX 255
+
 Joystick_ Joystick;
 
 const int maxRotaryButtonIndex = 7;
@@ -43,13 +44,17 @@ int currentSlider1Value = NO_VALUE;
 int previousSlider1Value = NO_VALUE;
 
 volatile int rotary1Direction = DIRECTION_NONE;
-int currentRotary1Mode = -1;
+int currentRotary1Mode = 0;
 int previousRotary1Button = NO_BUTTON;
 
 bool currentRotary1SwitchState = false;
 bool previousRotary1SwitchState = false; 
 
 void setup() {
+#ifdef DEBUG_SKIP_BEFORE_ROTARYMODE1
+  currentRotary1Mode = -1;
+#endif
+
 #ifdef DEBUG_SERIAL  
   Serial.begin(115200);
 #else if DEBUG_TIME
