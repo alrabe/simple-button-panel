@@ -29,6 +29,8 @@ const int rotaryModeCount = (sizeof(rotarty1Buttons)/sizeof(*rotarty1Buttons)) >
 #define DIRECTION_RIGHT 1
 #define DIRECTION_NONE -1
 
+#define SLIDER_MIN 0
+#define SLIDER_MAX 255
 Joystick_ Joystick;
 
 const int maxRotaryButtonIndex = 7;
@@ -58,6 +60,7 @@ void setup() {
   pinMode(ROTARY1_CLK, INPUT);
   pinMode(ROTARY1_DT, INPUT);
   attachInterrupt(digitalPinToInterrupt(ROTARY1_CLK), Rotary1Interrupt, LOW);
+  Joystick.setXAxisRange(SLIDER_MIN, SLIDER_MAX);
   Joystick.begin(false);
 }
 
@@ -115,7 +118,7 @@ void ReportUsb() {
   }
 
   if(currentSlider1Value != NO_VALUE) {
-    ; // TODO
+    Joystick.setXAxis(currentSlider1Value);
     currentSlider1Value = NO_VALUE;
   }
 
@@ -221,7 +224,7 @@ inline int convertAnalogToKeyPadButton(int analogValue) {
 }
 
 inline int convertAnalogToSliderValue(int analogValue) {
-  return map(analogValue, 0, 1023, 0, 100);  
+  return map(analogValue, 0, 1023, SLIDER_MIN, SLIDER_MAX);  
 }
 
 inline void printSensorValue(const char* label, int value) {   
