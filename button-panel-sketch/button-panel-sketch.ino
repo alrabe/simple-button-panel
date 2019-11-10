@@ -10,18 +10,24 @@
 #define SLIDER1 A0
 #define SLIDER2 A2
 #define KEYPAD1 A1
-#define ROTARY1_CLK 3   // has to support interrupt!
+#define ROTARY1_CLK 3   // need to support interrupts!
 #define ROTARY1_DT 2
 #define ROTARY1_SW 4
 
-const int rotarty1Buttons[] = {24, 25, 26, 27, 28, 29, 30, 31};       // add two buttons for each rotary1 mode
-const int keyPadButtonIds[] = {8, 4, 0, 9, 5, 1, 10, 6, 2, 11, 7, 3}; // keypad supports exactly 12 buttons (and addtional 12 in 2nd mode)
+// ROTARY1: Every two buttons will enable an additional mode by pressing rotary1 switch
+const int rotarty1Buttons[] = {24, 25, 26, 27, 28, 29, 30, 31};       
+
+// KEYPAD: The keypad supports exactly 24 buttons.
+// 12 from this list and additional 12 in the 2nd mode starting with #12
+const int keyPadButtonIds[] = {8, 4, 0, 9, 5, 1, 10, 6, 2, 11, 7, 3};
+
+// start of internal settings - change only if you understand the consequences!
 const int rotaryModeCount = (sizeof(rotarty1Buttons)/sizeof(*rotarty1Buttons)) >> 1;
+const int keyPadResistorValues[] = {400, 500, 530, 560, 590, 630, 670, 720, 770, 830, 910, 1000, 1030};
 
 #define DEBOUNCE_DELAY_MS 5
-#define DELAY_TIME_MS 40     // use less then 50 ms for non testing environment
+#define DELAY_TIME_MS 40
 
-// start of internals - only change if you understand the consequences!
 #define NO_BUTTON -1
 #define NO_VALUE -1
 
@@ -38,9 +44,6 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_GAMEPAD,
   true, true, false,     // Rx, Ry, no Rz Axis
   false, false,          // No rudder or throttle
   false, false, false);  // No accelerator, brake, or steering
-
-const int maxRotaryButtonIndex = 7;
-const int keyPadResistorValues[] = {400, 500, 530, 560, 590, 630, 670, 720, 770, 830, 910, 1000, 1030};
 
 int currentKeyPad1Button = NO_BUTTON;
 int keyPad1ButtonPress = NO_BUTTON;
@@ -100,7 +103,7 @@ void loop() {
 #endif  
 
 #ifdef DEBUG_TIME  
-  PrintTimeReport();
+  ReportTiming();
 #endif
 
   ReportUsb();
@@ -244,7 +247,7 @@ int ReadSliderValue(int sliderId) {
   return convertAnalogToSliderValue(analogRead(sliderId));
 }
 
-void PrintTimeReport() {
+void ReportTiming() {
   static unsigned long lastReportTime = 0;
   unsigned long currentTime = millis();
   
