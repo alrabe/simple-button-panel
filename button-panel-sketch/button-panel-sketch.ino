@@ -4,7 +4,7 @@
 //#define DEBUG_SERIAL
 //#define DEBUG_TIME
 //#define DEBUG_SKIP_JOYSTICK_UPDATE
-//#define DEBUG_SKIP_BEFORE_ROTARYMODE1 // do not send joystick events until rotary1 is klicked once
+//#define DEBUG_SKIP_BEFORE_ROTARYMODE1 // do not send joystick events until rotary1 is clicked once
 
 // connection pins
 #define SLIDER1 A0
@@ -76,6 +76,36 @@ void setup() {
   pinMode(ROTARY1_SW, INPUT_PULLUP);
   pinMode(ROTARY1_CLK, INPUT);
   pinMode(ROTARY1_DT, INPUT);
+  EnableInterrupts();
+}
+
+void loop() {
+  DisableInterrupts();
+  
+  unsigned long currentExecutionTime = millis();
+  UpdateRotary1Mode();
+  ReadRotary1();
+  ReadKeyPad1();
+  ReadSlider1();
+  
+  EnableInterrupts();
+  
+#ifdef DEBUG_TIME  
+  ReportTiming();
+#endif
+
+#ifndef DEBUG_SKIP_JOYSTICK_UPDATE
+  UpdateJoystick();
+#endif
+
+  DeleayNextExecution(currentExecutionTime);
+}
+
+inline void DisableInterrupts() {
+  detachInterrupt(digitalPinToInterrupt(ROTARY1_CLK));
+}
+
+inline void EnableInterrupts() {
   attachInterrupt(digitalPinToInterrupt(ROTARY1_CLK), Rotary1Interrupt, LOW);
 }
 
@@ -88,25 +118,6 @@ void Rotary1Interrupt() {
   }
   rotary1Direction = digitalRead(ROTARY1_DT) == LOW ? DIRECTION_LEFT : DIRECTION_RIGHT;    
   lastRotary1InterruptTime = currentTime;
-}
-
-void loop() {
-  unsigned long curretnExecutionTime = millis();
-
-  UpdateRotary1Mode();
-  ReadRotary1();
-  ReadKeyPad1();
-  ReadSlider1();
-
-#ifdef DEBUG_TIME  
-  ReportTiming();
-#endif
-
-#ifndef DEBUG_SKIP_JOYSTICK_UPDATE
-  UpdateJoystick();
-#endif
-
-  DeleayNextExecution(curretnExecutionTime);
 }
 
 inline void DeleayNextExecution(unsigned long lastExecution) {  
@@ -255,7 +266,7 @@ inline int ConvertAnalogToSliderValue(int analogValue) {
   return map(analogValue, 0, 1023, SLIDER_MIN, SLIDER_MAX);  
 }
 
-inline void PrintInputValue(const char* label, int value) {   
+void PrintInputValue(const char* label, int value) {   
   Serial.print(label);
   Serial.print(": ");
   Serial.println(value);
