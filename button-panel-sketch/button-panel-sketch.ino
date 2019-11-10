@@ -17,7 +17,7 @@
 // ROTARY1: Every two buttons will enable an additional mode by pressing rotary1 switch
 const int rotarty1Buttons[] = {24, 25, 26, 27, 28, 29, 30, 31};       
 
-// KEYPAD: The keypad supports exactly 24 buttons.
+// KEYPAD: The keypad supports exactly 24 buttons
 // 12 from this list and additional 12 in the 2nd mode starting with #12
 const int keyPadButtonIds[] = {8, 4, 0, 9, 5, 1, 10, 6, 2, 11, 7, 3};
 
@@ -35,8 +35,9 @@ const int keyPadResistorValues[] = {400, 500, 530, 560, 590, 630, 670, 720, 770,
 #define DIRECTION_RIGHT 1
 #define DIRECTION_NONE -1
 
+// Stop slider axis flattering between two values by downscaling resolution (max=0:1023)
 #define SLIDER_MIN 0
-#define SLIDER_MAX 500
+#define SLIDER_MAX 341
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_GAMEPAD,
   32, 0,                 // Button Count, Hat Switch Count
