@@ -1,18 +1,18 @@
 #include <Joystick.h>
 
 // DEBUG
-//#define DEBUG_SERIAL
+#define DEBUG_SERIAL
 //#define DEBUG_TIME
 //#define DEBUG_SKIP_JOYSTICK_UPDATE
 //#define DEBUG_SKIP_BEFORE_ROTARYMODE1 // do not send joystick events until rotary1 is clicked once
 
 // connection pins
-#define SLIDER1 A0
-#define SLIDER2 A2
-#define KEYPAD1 A1
-#define ROTARY1_CLK 3   // need to support interrupts!
-#define ROTARY1_DT 2
-#define ROTARY1_SW 4
+#define SLIDER1_PIN A0
+#define SLIDER2_PIN A1
+#define KEYPAD1 A2
+#define ROTARY1_DT 6
+#define ROTARY1_CLK 7   // need to support interrupts (1,2,3,7 on Leonardo)!
+#define ROTARY1_SW 8
 
 // ROTARY1: Every two buttons will enable an additional mode by pressing rotary1 switch
 const int rotarty1Buttons[] = {24, 25, 26, 27, 28, 29, 30, 31};       
@@ -27,6 +27,7 @@ const int keyPadResistorValues[] = {400, 500, 530, 560, 590, 630, 670, 720, 770,
 
 #define DEBOUNCE_DELAY_MS 5
 #define DELAY_TIME_MS 40
+#define BLINK_TIME_MS 250
 
 #define NO_BUTTON -1
 #define NO_VALUE -1
@@ -38,6 +39,8 @@ const int keyPadResistorValues[] = {400, 500, 530, 560, 590, 630, 670, 720, 770,
 // Stop slider axis flattering between two values by downscaling resolution (max=0:1023)
 #define SLIDER_MIN 0
 #define SLIDER_MAX 341
+#define SLIDER1_INDEX 0
+#define SLIDER2_INDEX 1
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_JOYSTICK,
   32, 0,                 // Button Count, Hat Switch Count
@@ -47,7 +50,7 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_JOYSTICK,
   false, false, false);  // No accelerator, brake, or steering
 
 int currentKeyPad1Button = NO_BUTTON;
-int currentSlider1Value = NO_VALUE;
+int currentSliderValue[] = {NO_VALUE, NO_VALUE};
 
 volatile int rotary1Direction = DIRECTION_NONE;
 volatile bool updateJoystick = true;
@@ -80,6 +83,7 @@ void setup() {
 }
 
 void loop() {
+ 
   DisableInterrupts();
   
   unsigned long currentExecutionTime = millis();
@@ -87,7 +91,9 @@ void loop() {
   ReadRotary1();
   ReadKeyPad1();
   ReadSlider1();
-  
+  ReadSlider2();
+    
+  Blink();
   EnableInterrupts();
   
 #ifdef DEBUG_TIME  
@@ -121,13 +127,11 @@ void Rotary1Interrupt() {
 }
 
 inline void DeleayNextExecution(unsigned long lastExecution) {  
-  digitalWrite(LED_BUILTIN, LOW);
   unsigned long nextExecution = lastExecution + DELAY_TIME_MS;
   while(millis() < nextExecution) {
     // prevent interrupts from shortcutting the delay
     delay(nextExecution - millis());
   }
-  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void UpdateJoystick() {
@@ -225,19 +229,35 @@ inline void PressKeyPad1Button(int button) {
 }
 
 void ReadSlider1() {
-  int newSliderValue = ReadSliderValue(SLIDER1);
-  if(newSliderValue != currentSlider1Value) {
-    Joystick.setRxAxis(newSliderValue);
-    updateJoystick = true;
-    currentSlider1Value = newSliderValue;
-#ifdef DEBUG_SERIAL 
-    PrintInputValue("Slider1", newSliderValue);
-#endif  
-  }
+  int newValue = ReadSlider(SLIDER1_INDEX, SLIDER1_PIN);
+  if(newValue != NO_VALUE)
+    Joystick.setRxAxis(newValue);
 }
 
-int ReadSliderValue(int sliderId) {
-  return ConvertAnalogToSliderValue(analogRead(sliderId));
+void ReadSlider2() {
+  int newValue = ReadSlider(SLIDER2_INDEX, SLIDER2_PIN);
+  if(newValue != NO_VALUE)
+    Joystick.setRyAxis(newValue);
+
+}
+
+int ReadSlider(int sliderIndex, int sliderPin) {
+  int newSliderValue = ReadSliderValue(sliderPin);
+  if(newSliderValue != currentSliderValue[sliderIndex]) {
+    updateJoystick = true;
+    currentSliderValue[sliderIndex] = newSliderValue;
+#ifdef DEBUG_SERIAL   
+    char* slider = "SliderX";
+    slider[6] = (char) (sliderIndex + 49);
+    PrintInputValue(slider, newSliderValue);
+#endif
+    return newSliderValue;
+  }
+  return NO_VALUE;
+}
+
+int ReadSliderValue(int sliderPin) {
+  return ConvertAnalogToSliderValue(analogRead(sliderPin));
 }
 
 void ReportTiming() {
@@ -264,6 +284,20 @@ inline int ConvertAnalogToKeyPadButton(int analogValue) {
 
 inline int ConvertAnalogToSliderValue(int analogValue) {
   return map(analogValue, 0, 1023, SLIDER_MIN, SLIDER_MAX);  
+}
+
+void Blink() {
+  static unsigned long lastBlinkTime = 0;
+  static bool ledState = LOW;
+  
+  unsigned long currentTime = millis();
+  
+  if(currentTime - lastBlinkTime < BLINK_TIME_MS) {
+    return;
+  }
+  ledState = !ledState;
+  digitalWrite(LED_BUILTIN, ledState);
+  lastBlinkTime = currentTime;  
 }
 
 void PrintInputValue(const char* label, int value) {   
