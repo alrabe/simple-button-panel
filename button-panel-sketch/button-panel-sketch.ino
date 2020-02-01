@@ -1,7 +1,9 @@
 #include "MySettings.h"
 #include "MyJoystick.h"
+#include "MyKeyboard.h"
 
 MyJoystick joystick;
+MyKeyboard keyboard;
 
 void setup() {
   SetupPins();

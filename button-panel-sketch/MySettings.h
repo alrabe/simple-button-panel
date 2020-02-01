@@ -1,5 +1,5 @@
-#ifndef mySettings_h
-#define mySettings_h
+#ifndef MySettings_h
+#define MySettings_h
 
 // *** DEBUG settings ***
 #define DEBUG_SERIAL
